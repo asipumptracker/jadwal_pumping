@@ -1,0 +1,17 @@
+{
+  "name": "ASI Pump Tracker",
+  "short_name": "ASI Tracker",
+  "description": "Aplikasi pencatatan jadwal pumping, produksi, dan stok ASI.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#FBF1E9",
+  "theme_color": "#A85A44",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
