@@ -3,26 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#A85A44">
+<meta name="theme-color" content="#6BB7D8">
 <link rel="manifest" href="manifest.json">
 <title>ASI Pump Tracker - Jadwal Pumping & Stok ASI</title>
 <style>
   :root{
-    --cream:#FBF1E9;
-    --cream-soft:#FCF6EF;
-    --terracotta:#A85A44;
-    --terracotta-dark:#8B4636;
-    --terracotta-light:#F2DDD3;
-    --ink:#3A2C26;
-    --ink-soft:#7A6359;
-    --line:#EADFD3;
-    --green-bg:#DCEEDD;
-    --green-ink:#2F6B43;
+    --cream:#EFF9FD;
+    --cream-soft:#F7FCFF;
+    --terracotta:#6BB7D8;
+    --terracotta-dark:#247CA7;
+    --terracotta-light:#D8F0FA;
+    --ink:#203846;
+    --ink-soft:#5C7583;
+    --line:#CDE7F2;
+    --green-bg:#DDF4EA;
+    --green-ink:#22755B;
     --white:#FFFFFF;
     --warn-bg:#FBE6D8;
     --warn-ink:#A8542F;
     --danger:#C1452E;
-    --shadow: 0 2px 10px rgba(58,44,38,0.06);
+    --shadow: 0 2px 10px rgba(32,56,70,0.07);
     --radius-lg: 22px;
     --radius-md: 16px;
     --radius-sm: 10px;
@@ -33,9 +33,9 @@
     outline-offset:2px;
   }
   body.dark{
-    --cream:#171311;--cream-soft:#211B18;--terracotta:#C9795F;--terracotta-dark:#F0B09A;
-    --terracotta-light:#3A2822;--ink:#F5E9E1;--ink-soft:#BFA99E;--line:#463832;
-    --green-bg:#20392A;--green-ink:#9DD5AD;--white:#27201D;--warn-bg:#422B20;
+    --cream:#101820;--cream-soft:#172530;--terracotta:#80C8E8;--terracotta-dark:#BDE7F8;
+    --terracotta-light:#1F3D4D;--ink:#EDF8FC;--ink-soft:#A9C3D0;--line:#2B4A59;
+    --green-bg:#20392A;--green-ink:#9DD5AD;--white:#1B2D38;--warn-bg:#422B20;
     --warn-ink:#F1A57C;--shadow:0 3px 14px rgba(0,0,0,.28);
   }
   body.dark input,body.dark select,body.dark textarea,body.dark .filter-row button{background:#2B231F;color:var(--ink);}
@@ -49,9 +49,9 @@
   body{
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background:
-      radial-gradient(circle at 15% 15%, rgba(193,107,79,.12), transparent 32%),
-      radial-gradient(circle at 85% 80%, rgba(121,183,145,.10), transparent 30%),
-      #f4e9df;
+      radial-gradient(circle at 15% 15%, rgba(107,183,216,.18), transparent 32%),
+      radial-gradient(circle at 85% 80%, rgba(99,204,190,.12), transparent 30%),
+      #E7F5FB;
     color: var(--ink);
     display:flex;
     justify-content:center;
@@ -625,6 +625,10 @@
   .edu-card.open .edu-body{ display:block; }
   .edu-body ul{ margin:6px 0; padding-left:18px; }
   .edu-body li{ margin-bottom:4px; }
+  .edu-admin-textarea{
+    min-height:220px;
+    line-height:1.55;
+  }
 
   /* ---------- Konsultasi ---------- */
   .konsul-card{
@@ -1834,7 +1838,7 @@ function renderHeroNext(){
 }
 
 function launchConfetti(){
-  const colors=['#A85A44','#E9A88E','#F4C95D','#79B791','#8E7DBE'];
+  const colors=['#6BB7D8','#9ED8EC','#F4C95D','#63CCBE','#8E7DBE'];
   for(let i=0;i<42;i++){
     const piece=document.createElement('i');
     piece.className='confetti-piece';
@@ -2542,7 +2546,7 @@ function eduBodyFromText(text){
   return lines.length ? `<ul>${lines.map(line=>`<li>${escapeHtml(line)}</li>`).join('')}</ul>` : '<p>Materi belum diisi.</p>';
 }
 
-function saveCounselorEdu(index){
+function saveAdminEdu(index){
   const list = getEduContent();
   const title = document.getElementById(`eduEditTitle${index}`).value.trim();
   const bodyText = document.getElementById(`eduEditBody${index}`).value.trim();
@@ -2551,7 +2555,7 @@ function saveCounselorEdu(index){
   DATA.educationContent = list;
   saveData();
   showToast('Materi edukasi diperbarui');
-  renderCounselorDashboard();
+  renderAdminDashboard();
 }
 
 function verifiedCounselors(){
@@ -2689,7 +2693,6 @@ const COUNSELOR_TABS = [
   {id:'home', label:'Beranda', icon:'home'},
   {id:'consult', label:'Konsultasi', icon:'chat'},
   {id:'schedule', label:'Jadwal', icon:'calendar'},
-  {id:'education', label:'Edukasi', icon:'book'},
   {id:'profile', label:'Profil', icon:'user'}
 ];
 const counselorConsultations = [
@@ -2855,14 +2858,6 @@ function counselorTabContent(user){
         <button class="btn block" id="counselorAddScheduleBtn">Tambah Slot Praktik</button>
       </div>`;
   }
-  if(counselorTab === 'education'){
-    return `<div class="section-title"><span>Edit edukasi bunda</span></div>
-      ${getEduContent().map((e,i)=>`<div class="konsul-card">
-        <div class="field"><label>Judul materi</label><input id="eduEditTitle${i}" value="${escapeHtml(e.title)}"></div>
-        <div class="field"><label>Isi materi</label><textarea id="eduEditBody${i}" rows="5">${escapeHtml(eduPlainText(e.body))}</textarea></div>
-        <button class="btn block counselor-save-edu-btn" data-idx="${i}">Simpan Materi</button>
-      </div>`).join('')}`;
-  }
   if(counselorTab === 'profile'){
     return `<div class="section-title"><span>Profil konselor</span></div>
       <div class="konsul-card">
@@ -2916,7 +2911,6 @@ function renderCounselorDashboard(){
   if(saveProfileBtn) saveProfileBtn.onclick=saveCounselorProfile;
   const shareEduBtn = document.getElementById('counselorShareEduBtn');
   if(shareEduBtn) shareEduBtn.onclick=()=>showToast('Materi edukasi dibagikan (demo)');
-  page.querySelectorAll('.counselor-save-edu-btn').forEach(btn=>btn.onclick=()=>saveCounselorEdu(Number(btn.dataset.idx)));
   const logoutBtn = document.getElementById('counselorLogoutBtn');
   if(logoutBtn) logoutBtn.onclick=logoutUser;
   document.getElementById('bottomNav').innerHTML = COUNSELOR_TABS.map(t=>`<button data-counselor-tab="${t.id}" class="${t.id===counselorTab?'active':''}"><span class="ic">${counselorIcon(t.icon)}</span><span class="txt">${t.label}</span></button>`).join('');
@@ -3010,6 +3004,12 @@ function renderAdminDashboard(){
       <div class="field"><label>Instansi/tempat praktik</label><input id="adminCounselorInstitution"></div>
       <button class="btn block" id="adminAddCounselorBtn">Tambah & Verifikasi Konselor</button>
     </div>
+    <div class="section-title"><span>Master edukasi</span></div>
+    ${getEduContent().map((e,i)=>`<div class="konsul-card">
+      <div class="field"><label>Judul materi</label><input id="eduEditTitle${i}" value="${escapeHtml(e.title)}" maxlength="160"></div>
+      <div class="field"><label>Isi materi</label><textarea id="eduEditBody${i}" class="edu-admin-textarea" rows="10" placeholder="Tulis satu poin materi per baris. Bisa diisi panjang sesuai kebutuhan.">${escapeHtml(eduPlainText(e.body))}</textarea></div>
+      <button class="btn block admin-save-edu-btn" data-idx="${i}">Simpan Materi</button>
+    </div>`).join('')}
     <div class="section-title"><span>Verifikasi akun bunda</span></div>
     <div id="adminMotherList">${pendingMothers.length ? pendingMothers.map(adminAccountRow).join('') : `<div class="empty-state"><div class="t">Tidak ada akun bunda pending</div><div class="s">Akun bunda baru akan muncul di sini setelah daftar.</div></div>`}</div>
     <div class="section-title"><span>Verifikasi konselor</span></div>
@@ -3017,6 +3017,7 @@ function renderAdminDashboard(){
     <div class="section-title"><span>Daftar konselor</span></div>
     <div>${counselors.length ? counselors.map(c=>adminAccountRow(c)).join('') : `<div class="empty-state"><div class="t">Belum ada konselor</div><div class="s">Tambahkan konselor dari form di atas.</div></div>`}</div>`;
   document.getElementById('adminAddCounselorBtn').onclick=addCounselorByAdmin;
+  page.querySelectorAll('.admin-save-edu-btn').forEach(btn=>btn.onclick=()=>saveAdminEdu(Number(btn.dataset.idx)));
   page.querySelectorAll('.admin-verify-btn').forEach(btn=>btn.onclick=()=>setAccountStatus(btn.dataset.id,'verified'));
   page.querySelectorAll('.admin-reject-btn').forEach(btn=>btn.onclick=()=>setAccountStatus(btn.dataset.id,'rejected'));
   document.getElementById('bottomNav').innerHTML = `<button class="active"><span class="ic">${appIcon('home')}</span><span class="txt">Admin</span></button><button id="adminLogoutNav"><span class="ic">${appIcon('user')}</span><span class="txt">Logout</span></button>`;
