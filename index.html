@@ -629,6 +629,81 @@
     min-height:220px;
     line-height:1.55;
   }
+  .admin-menu-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+    margin:14px 0 18px;
+  }
+  .admin-menu-card{
+    border:1px solid var(--line);
+    background:var(--white);
+    color:var(--ink);
+    border-radius:16px;
+    min-height:96px;
+    padding:13px;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+    text-align:left;
+    cursor:pointer;
+    box-shadow:var(--shadow);
+  }
+  .admin-menu-card.active{
+    border-color:var(--terracotta);
+    background:linear-gradient(180deg,var(--white),var(--terracotta-light));
+  }
+  .admin-menu-card .top{display:flex;align-items:center;justify-content:space-between;width:100%;gap:10px;}
+  .admin-menu-card .ic{
+    width:38px;height:38px;border-radius:13px;display:grid;place-items:center;
+    background:var(--terracotta-light);color:var(--terracotta-dark);flex:0 0 auto;
+  }
+  .admin-menu-card .ic svg{width:21px;height:21px;}
+  .admin-menu-card .count{
+    min-width:28px;height:28px;border-radius:14px;background:var(--cream-soft);border:1px solid var(--line);
+    display:grid;place-items:center;font-size:12px;font-weight:900;color:var(--terracotta-dark);
+  }
+  .admin-menu-card .title{display:block;font-size:13px;font-weight:900;line-height:1.2;}
+  .admin-menu-card .desc{display:block;margin-top:3px;font-size:11.5px;color:var(--ink-soft);line-height:1.35;}
+  .admin-panel-head{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:2px 0 12px;
+  }
+  .admin-panel-head h2{
+    margin:0;
+    font-family:Georgia,serif;
+    color:var(--terracotta-dark);
+    font-size:20px;
+  }
+  .admin-panel-head p{margin:4px 0 0;color:var(--ink-soft);font-size:13px;line-height:1.45;}
+  .admin-account-row{align-items:flex-start;gap:12px;}
+  .admin-account-row .admin-status{
+    display:inline-flex;align-items:center;margin-top:7px;padding:4px 9px;border-radius:999px;
+    background:var(--green-bg);color:var(--green-ink);font-size:11px;font-weight:900;
+  }
+  .admin-account-row.pending .admin-status{background:var(--warn-bg);color:var(--warn-ink);}
+  .admin-account-row.rejected .admin-status{background:#FBDADA;color:var(--danger);}
+  .admin-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+  .admin-edu-actions{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;}
+  .admin-edu-list{display:grid;gap:10px;margin-bottom:14px;}
+  .admin-edu-row{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--cream-soft);border:1px solid var(--line);border-radius:var(--radius-md);
+    padding:13px 14px;
+  }
+  .admin-edu-row.active{border-color:var(--terracotta);background:linear-gradient(180deg,var(--white),var(--terracotta-light));}
+  .admin-edu-row .info{min-width:0;flex:1;}
+  .admin-edu-row .title{font-size:14px;font-weight:900;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .admin-edu-row .meta{font-size:12px;color:var(--ink-soft);margin-top:3px;}
+  .admin-edu-row .actions{display:flex;gap:6px;flex:0 0 auto;}
+  @media(max-width:380px){
+    .admin-menu-grid{grid-template-columns:1fr;}
+    .admin-edu-actions{grid-template-columns:1fr;}
+    .admin-edu-row{align-items:flex-start;flex-direction:column;}
+    .admin-edu-row .actions{width:100%;}
+    .admin-edu-row .actions .btn{flex:1;}
+  }
 
   /* ---------- Konsultasi ---------- */
   .konsul-card{
@@ -2548,13 +2623,69 @@ function eduBodyFromText(text){
 
 function saveAdminEdu(index){
   const list = getEduContent();
-  const title = document.getElementById(`eduEditTitle${index}`).value.trim();
-  const bodyText = document.getElementById(`eduEditBody${index}`).value.trim();
+  const titleInput = document.getElementById('eduFormTitle') || document.getElementById(`eduEditTitle${index}`);
+  const bodyInput = document.getElementById('eduFormBody') || document.getElementById(`eduEditBody${index}`);
+  const title = titleInput.value.trim();
+  const bodyText = bodyInput.value.trim();
   if(!title || !bodyText){ showToast('Judul dan isi materi wajib diisi'); return; }
   list[index] = {...list[index], title, body: eduBodyFromText(bodyText)};
   DATA.educationContent = list;
+  adminEduFormMode = null;
   saveData();
   showToast('Materi edukasi diperbarui');
+  renderAdminDashboard();
+}
+
+function addAdminEdu(){
+  adminEduFormMode = 'add';
+  adminEduEditIndex = 0;
+  renderAdminDashboard();
+}
+
+function saveNewAdminEdu(){
+  const list = getEduContent();
+  const title = document.getElementById('eduFormTitle').value.trim();
+  const bodyText = document.getElementById('eduFormBody').value.trim();
+  if(!title || !bodyText){ showToast('Judul dan isi materi wajib diisi'); return; }
+  list.unshift({
+    ic:'',
+    title,
+    body: eduBodyFromText(bodyText)
+  });
+  DATA.educationContent = list;
+  adminEduEditIndex = 0;
+  adminEduFormMode = null;
+  saveData();
+  showToast('Materi baru ditambahkan');
+  renderAdminDashboard();
+}
+
+async function deleteAdminEdu(index){
+  const list = getEduContent();
+  const item = list[index];
+  if(!item) return;
+  if(!await askConfirm(`Hapus materi "${item.title || 'edukasi'}"?`,{title:'Hapus materi edukasi',okText:'Hapus'})) return;
+  list.splice(index,1);
+  DATA.educationContent = list;
+  adminEduEditIndex = Math.min(index, Math.max(0, list.length - 1));
+  saveData();
+  showToast('Materi edukasi dihapus');
+  renderAdminDashboard();
+}
+
+function editAdminEdu(index){
+  adminEduEditIndex = index;
+  adminEduFormMode = 'edit';
+  renderAdminDashboard();
+}
+
+function saveAdminEduForm(){
+  if(adminEduFormMode === 'add') saveNewAdminEdu();
+  else saveAdminEdu(adminEduEditIndex);
+}
+
+function cancelAdminEduForm(){
+  adminEduFormMode = null;
   renderAdminDashboard();
 }
 
@@ -2930,16 +3061,132 @@ function adminAccountRow(account){
     ? `${account.institution || 'Instansi belum diisi'} - ${account.certificateNumber || 'Sertifikat belum diisi'}`
     : `WhatsApp: ${account.phone || '-'}`;
   const canVerify = account.status === 'pending';
-  return `<div class="atur-row admin-account-row" style="align-items:flex-start;gap:12px;">
+  return `<div class="atur-row admin-account-row ${escapeHtml(account.status || 'pending')}">
     <div>
       <div class="lbl">${escapeHtml(account.name || '-')}</div>
-      <div class="desc">${escapeHtml(account.email || '-')} - ${account.role === 'counselor' ? 'Konselor' : 'Bunda'} - ${escapeHtml(accountStatusText(account))}</div>
+      <div class="desc">${escapeHtml(account.email || '-')} - ${account.role === 'counselor' ? 'Konselor' : 'Bunda'}</div>
       <div class="desc">${escapeHtml(meta)}</div>
+      <span class="admin-status">${escapeHtml(accountStatusText(account))}</span>
     </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+    <div class="admin-actions">
       ${canVerify ? `<button class="btn small admin-verify-btn" data-id="${escapeHtml(account.id)}">Verif</button><button class="btn small secondary admin-reject-btn" data-id="${escapeHtml(account.id)}">Tolak</button>` : ''}
     </div>
   </div>`;
+}
+
+const ADMIN_TABS = [
+  {id:'home', label:'Dashboard', icon:'home'},
+  {id:'education', label:'Master Edukasi', icon:'book'},
+  {id:'mothers', label:'Verifikasi Bunda', icon:'user'},
+  {id:'counselors', label:'Verifikasi Konselor', icon:'chat'},
+  {id:'directory', label:'Daftar Konselor', icon:'calendar'}
+];
+let adminTab = 'home';
+let adminEduEditIndex = 0;
+let adminEduFormMode = null;
+
+function setAdminTab(tab){
+  adminTab = tab;
+  renderAdminDashboard();
+}
+
+function adminMenu(accounts){
+  const pendingMothers = accounts.filter(a=>a.role==='mother' && a.status==='pending').length;
+  const pendingCounselors = accounts.filter(a=>a.role==='counselor' && a.status==='pending').length;
+  const verifiedCounselors = accounts.filter(a=>a.role==='counselor' && (a.status==='verified' || a.status==='active')).length;
+  const counts = {
+    home: pendingMothers + pendingCounselors,
+    education: getEduContent().length,
+    mothers: pendingMothers,
+    counselors: pendingCounselors,
+    directory: verifiedCounselors
+  };
+  const desc = {
+    home:'Ringkasan admin',
+    education:'Kelola materi edukasi',
+    mothers:'Akun bunda pending',
+    counselors:'Pengajuan konselor',
+    directory:'Tambah dan pantau konselor'
+  };
+  return `<div class="admin-menu-grid">${ADMIN_TABS.map(t=>`
+    <button class="admin-menu-card ${adminTab===t.id?'active':''}" data-admin-tab="${t.id}">
+      <span class="top"><span class="ic">${counselorIcon(t.icon)}</span><span class="count">${counts[t.id]}</span></span>
+      <span><span class="title">${t.label}</span><span class="desc">${desc[t.id]}</span></span>
+    </button>`).join('')}</div>`;
+}
+
+function adminEducationPanel(){
+  const list = getEduContent();
+  if(adminEduEditIndex >= list.length) adminEduEditIndex = Math.max(0, list.length - 1);
+  const selected = list[adminEduEditIndex];
+  const isAdding = adminEduFormMode === 'add';
+  const isEditing = adminEduFormMode === 'edit' && selected;
+  const listHtml = list.length ? `<div class="admin-edu-list">${list.map((e,i)=>`
+      <div class="admin-edu-row ${i===adminEduEditIndex?'active':''}">
+        <div class="info">
+          <div class="title">${escapeHtml(e.title || 'Materi tanpa judul')}</div>
+          <div class="meta">${eduPlainText(e.body).split('\n').filter(Boolean).length || 1} poin materi</div>
+        </div>
+        <div class="actions">
+          <button class="btn small secondary admin-edit-edu-btn" data-idx="${i}">Edit</button>
+          <button class="btn small danger admin-delete-edu-btn" data-idx="${i}">Hapus</button>
+        </div>
+      </div>`).join('')}</div>` : `<div class="empty-state"><div class="t">Belum ada materi</div><div class="s">Tambahkan materi edukasi pertama.</div></div>`;
+  const editorHtml = (isAdding || isEditing) ? `<div class="konsul-card">
+      <div class="section-title"><span>${isAdding ? 'Tambah materi baru' : 'Edit materi'}</span></div>
+      <div class="field"><label>Judul materi</label><input id="eduFormTitle" value="${isEditing ? escapeHtml(selected.title) : ''}" maxlength="160" placeholder="contoh: Cara menyimpan ASIP"></div>
+      <div class="field"><label>Isi materi</label><textarea id="eduFormBody" class="edu-admin-textarea" rows="10" placeholder="Tulis satu poin materi per baris. Bisa diisi panjang sesuai kebutuhan.">${isEditing ? escapeHtml(eduPlainText(selected.body)) : ''}</textarea></div>
+      <div class="admin-edu-actions">
+        <button class="btn block" id="adminSaveEduFormBtn">${isAdding ? 'Tambah Materi' : 'Simpan Perubahan'}</button>
+        <button class="btn small secondary" id="adminCancelEduFormBtn">Batal</button>
+      </div>
+    </div>` : '';
+  return `<div class="admin-panel-head"><div><h2>Master Edukasi</h2><p>Tambah, edit, atau hapus materi edukasi yang tampil di halaman edukasi bunda dan konselor.</p></div><button class="btn small" id="adminAddEduBtn">Tambah Materi</button></div>
+    ${editorHtml}
+    ${listHtml}`;
+}
+
+function adminMothersPanel(pendingMothers){
+  return `<div class="admin-panel-head"><div><h2>Verifikasi Akun Bunda</h2><p>Setujui akun bunda baru sebelum dapat masuk ke aplikasi.</p></div></div>
+    <div id="adminMotherList">${pendingMothers.length ? pendingMothers.map(adminAccountRow).join('') : `<div class="empty-state"><div class="t">Tidak ada akun bunda pending</div><div class="s">Akun bunda baru akan muncul di sini setelah daftar.</div></div>`}</div>`;
+}
+
+function adminCounselorsPanel(pendingCounselors){
+  return `<div class="admin-panel-head"><div><h2>Verifikasi Konselor</h2><p>Periksa identitas, sertifikat, dan instansi konselor sebelum diverifikasi.</p></div></div>
+    <div id="adminCounselorList">${pendingCounselors.length ? pendingCounselors.map(adminAccountRow).join('') : `<div class="empty-state"><div class="t">Tidak ada konselor pending</div><div class="s">Pendaftaran konselor baru akan muncul di sini.</div></div>`}</div>`;
+}
+
+function adminDirectoryPanel(counselors){
+  return `<div class="admin-panel-head"><div><h2>Daftar Konselor</h2><p>Tambah konselor langsung atau pantau status akun konselor yang sudah terdaftar.</p></div></div>
+    <div class="konsul-card">
+      <div class="field"><label>Nama konselor</label><input id="adminCounselorName" placeholder="contoh: Konselor Laktasi"></div>
+      <div class="field"><label>Email</label><input id="adminCounselorEmail" type="email" placeholder="konselor@contoh.com"></div>
+      <div class="field"><label>Nomor WhatsApp</label><input id="adminCounselorPhone" inputmode="tel" placeholder="628xxxxxxxxxx"></div>
+      <div class="field"><label>Password awal</label><input id="adminCounselorPassword" type="password" placeholder="minimal 8 karakter"></div>
+      <div class="field"><label>Nomor STR/Sertifikat</label><input id="adminCounselorCert"></div>
+      <div class="field"><label>Instansi/tempat praktik</label><input id="adminCounselorInstitution"></div>
+      <button class="btn block" id="adminAddCounselorBtn">Tambah & Verifikasi Konselor</button>
+    </div>
+    <div class="section-title"><span>Semua konselor</span></div>
+    <div>${counselors.length ? counselors.map(c=>adminAccountRow(c)).join('') : `<div class="empty-state"><div class="t">Belum ada konselor</div><div class="s">Tambahkan konselor dari form di atas.</div></div>`}</div>`;
+}
+
+function adminHomePanel(pendingMothers,pendingCounselors,counselors){
+  return `<div class="admin-panel-head"><div><h2>Dashboard Admin</h2><p>Pilih menu di atas untuk mengelola area admin secara terpisah.</p></div></div>
+    <div class="section-title"><span>Antrian verifikasi</span></div>
+    ${pendingMothers.slice(0,2).map(adminAccountRow).join('')}
+    ${pendingCounselors.slice(0,2).map(adminAccountRow).join('')}
+    ${(!pendingMothers.length && !pendingCounselors.length) ? `<div class="empty-state"><div class="t">Tidak ada akun pending</div><div class="s">Semua pengajuan sudah ditangani.</div></div>` : ''}
+    <div class="section-title"><span>Konselor aktif</span></div>
+    <div class="atur-row"><div><div class="lbl">${counselors.length} akun konselor</div><div class="desc">Termasuk konselor pending, terverifikasi, dan ditolak.</div></div><button class="btn small secondary" data-admin-tab="directory">Lihat</button></div>`;
+}
+
+function adminTabContent(pendingMothers,pendingCounselors,counselors){
+  if(adminTab === 'education') return adminEducationPanel();
+  if(adminTab === 'mothers') return adminMothersPanel(pendingMothers);
+  if(adminTab === 'counselors') return adminCounselorsPanel(pendingCounselors);
+  if(adminTab === 'directory') return adminDirectoryPanel(counselors);
+  return adminHomePanel(pendingMothers,pendingCounselors,counselors);
 }
 
 function setAccountStatus(id,status){
@@ -2990,37 +3237,28 @@ function renderAdminDashboard(){
   const pendingMothers = accounts.filter(a=>a.role==='mother' && a.status==='pending');
   const pendingCounselors = accounts.filter(a=>a.role==='counselor' && a.status==='pending');
   const counselors = accounts.filter(a=>a.role==='counselor');
-  page.innerHTML = `<div class="dashboard-hero">
+  page.innerHTML = `${adminTab === 'home' ? `<div class="dashboard-hero">
       <div class="dash-top"><div class="dash-greet"><div class="hello">Halo, Admin</div><div class="sub">Verifikasi akun bunda dan kelola konselor.</div></div><img class="dash-avatar" src="icon.svg" alt=""></div>
       <div class="dash-cards"><div class="dash-card"><div><div class="label">Bunda pending</div><div class="value">${pendingMothers.length} <span>akun</span></div><div class="note">Perlu verifikasi</div></div></div><div class="dash-card"><div><div class="label">Konselor pending</div><div class="value">${pendingCounselors.length} <span>akun</span></div><div class="note">Perlu verifikasi</div></div></div></div>
-    </div>
-    <div class="section-title"><span>Tambah konselor</span></div>
-    <div class="konsul-card">
-      <div class="field"><label>Nama konselor</label><input id="adminCounselorName" placeholder="contoh: Konselor Laktasi"></div>
-      <div class="field"><label>Email</label><input id="adminCounselorEmail" type="email" placeholder="konselor@contoh.com"></div>
-      <div class="field"><label>Nomor WhatsApp</label><input id="adminCounselorPhone" inputmode="tel" placeholder="628xxxxxxxxxx"></div>
-      <div class="field"><label>Password awal</label><input id="adminCounselorPassword" type="password" placeholder="minimal 8 karakter"></div>
-      <div class="field"><label>Nomor STR/Sertifikat</label><input id="adminCounselorCert"></div>
-      <div class="field"><label>Instansi/tempat praktik</label><input id="adminCounselorInstitution"></div>
-      <button class="btn block" id="adminAddCounselorBtn">Tambah & Verifikasi Konselor</button>
-    </div>
-    <div class="section-title"><span>Master edukasi</span></div>
-    ${getEduContent().map((e,i)=>`<div class="konsul-card">
-      <div class="field"><label>Judul materi</label><input id="eduEditTitle${i}" value="${escapeHtml(e.title)}" maxlength="160"></div>
-      <div class="field"><label>Isi materi</label><textarea id="eduEditBody${i}" class="edu-admin-textarea" rows="10" placeholder="Tulis satu poin materi per baris. Bisa diisi panjang sesuai kebutuhan.">${escapeHtml(eduPlainText(e.body))}</textarea></div>
-      <button class="btn block admin-save-edu-btn" data-idx="${i}">Simpan Materi</button>
-    </div>`).join('')}
-    <div class="section-title"><span>Verifikasi akun bunda</span></div>
-    <div id="adminMotherList">${pendingMothers.length ? pendingMothers.map(adminAccountRow).join('') : `<div class="empty-state"><div class="t">Tidak ada akun bunda pending</div><div class="s">Akun bunda baru akan muncul di sini setelah daftar.</div></div>`}</div>
-    <div class="section-title"><span>Verifikasi konselor</span></div>
-    <div id="adminCounselorList">${pendingCounselors.length ? pendingCounselors.map(adminAccountRow).join('') : `<div class="empty-state"><div class="t">Tidak ada konselor pending</div><div class="s">Pendaftaran konselor baru akan muncul di sini.</div></div>`}</div>
-    <div class="section-title"><span>Daftar konselor</span></div>
-    <div>${counselors.length ? counselors.map(c=>adminAccountRow(c)).join('') : `<div class="empty-state"><div class="t">Belum ada konselor</div><div class="s">Tambahkan konselor dari form di atas.</div></div>`}</div>`;
-  document.getElementById('adminAddCounselorBtn').onclick=addCounselorByAdmin;
+    </div>` : ''}
+    ${adminTab === 'home' ? adminMenu(accounts) : ''}
+    ${adminTabContent(pendingMothers,pendingCounselors,counselors)}`;
+  page.querySelectorAll('[data-admin-tab]').forEach(btn=>btn.onclick=()=>setAdminTab(btn.dataset.adminTab));
+  const addCounselorBtn = document.getElementById('adminAddCounselorBtn');
+  if(addCounselorBtn) addCounselorBtn.onclick=addCounselorByAdmin;
+  const addEduBtn = document.getElementById('adminAddEduBtn');
+  if(addEduBtn) addEduBtn.onclick=addAdminEdu;
+  const saveEduFormBtn = document.getElementById('adminSaveEduFormBtn');
+  if(saveEduFormBtn) saveEduFormBtn.onclick=saveAdminEduForm;
+  const cancelEduFormBtn = document.getElementById('adminCancelEduFormBtn');
+  if(cancelEduFormBtn) cancelEduFormBtn.onclick=cancelAdminEduForm;
   page.querySelectorAll('.admin-save-edu-btn').forEach(btn=>btn.onclick=()=>saveAdminEdu(Number(btn.dataset.idx)));
+  page.querySelectorAll('.admin-edit-edu-btn').forEach(btn=>btn.onclick=()=>editAdminEdu(Number(btn.dataset.idx)));
+  page.querySelectorAll('.admin-delete-edu-btn').forEach(btn=>btn.onclick=()=>deleteAdminEdu(Number(btn.dataset.idx)));
   page.querySelectorAll('.admin-verify-btn').forEach(btn=>btn.onclick=()=>setAccountStatus(btn.dataset.id,'verified'));
   page.querySelectorAll('.admin-reject-btn').forEach(btn=>btn.onclick=()=>setAccountStatus(btn.dataset.id,'rejected'));
-  document.getElementById('bottomNav').innerHTML = `<button class="active"><span class="ic">${appIcon('home')}</span><span class="txt">Admin</span></button><button id="adminLogoutNav"><span class="ic">${appIcon('user')}</span><span class="txt">Logout</span></button>`;
+  document.getElementById('bottomNav').innerHTML = `${ADMIN_TABS.map(t=>`<button data-admin-tab="${t.id}" class="${adminTab===t.id?'active':''}"><span class="ic">${counselorIcon(t.icon)}</span><span class="txt">${t.label.replace('Verifikasi ','')}</span></button>`).join('')}<button id="adminLogoutNav"><span class="ic">${appIcon('user')}</span><span class="txt">Logout</span></button>`;
+  document.querySelectorAll('#bottomNav [data-admin-tab]').forEach(btn=>btn.onclick=()=>setAdminTab(btn.dataset.adminTab));
   document.getElementById('adminLogoutNav').onclick=logoutUser;
   document.getElementById('quickLogFab').classList.add('hidden');
   main.scrollTop = 0;
